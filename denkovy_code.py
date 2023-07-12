@@ -13,7 +13,6 @@ import os
 from datetime import date
 import configparser
 import sys
-from anyascii import anyascii
 
 
 def snmpget(logger, community, ip, port, oid):
@@ -86,13 +85,17 @@ def relay_read_status(relay_id_template, r_id, board_ip, board_port, logger):
 def main():
     parser = argparse.ArgumentParser(description='Denkovi python script')
     parser.add_argument("--logdir", type=str, help='Path to directory with the script logs.',
-                        default="/Users/aisulu/Desktop/DENKOVY/logs//")    #change path
+                        default="./logs/")  # change path to './logs/'
     parser.add_argument("--inifile", type=str, help='Path to config file.',
-                        default="/Users/aisulu/Desktop/DENKOVY/denkovi.ini")    ##change path
+                        default="./denkovi.ini")  # change path to './denkovy.ini'
+    parser.add_argument("--state", action='store_true', help='Show current state of the relay.')
+    parser.add_argument("--control", type=int, help='Control the relay (0 for OFF, 1 for ON).')
 
     args = parser.parse_args()
     logdir = args.logdir
     inifile = args.inifile
+    show_state = args.state
+    control_state = args.control
 
     # ---------LOGGING-----------------------------------------------------------------------------
     logger = logging.getLogger('')
@@ -108,16 +111,7 @@ def main():
     # point logging to console
     stderr_log_handler = logging.StreamHandler()
     logger.addHandler(stderr_log_handler)
-    
-    formatter = logging.Formatter('%(asctime)s - %(name)s: %(message)s')
-    file_log_handler.setFormatter(formatter)
-    stderr_log_handler.setFormatter(formatter)
-    logger.setLevel('DEBUG')
 
-    version = "1.0.0.0"
-    logger.info("Denkovi interface script by Ghalam. version %s" % version)
-
-    # ----------import config file-----------------------------------------------------------------
     config = configparser.ConfigParser()
     if os.path.isfile(inifile):
         try:
@@ -125,6 +119,7 @@ def main():
             board_ip = config.get("ADDRESS", "ip")
             board_port = config.get("ADDRESS", "port")
             relay_id_template = config.get("ADDRESS", "relay_oid_template")
+            r_id = config.get("ADDRESS", "r_id_1")  # Define r_id
 
         except Exception as e:
             logger.error("ERROR: Error reading ini file: %s", e)
@@ -132,19 +127,38 @@ def main():
     else:
         logger.error("no inifile %s exists" % inifile)
         exit(1)
-        
-    r_id = 1        #pin in use (Pin 1)
-    status = relay_read_status(relay_id_template, r_id, board_ip, board_port, logger)
-    
-    cond = 'ON' if status[0][1] == 1 else 'OFF'
-        
-    logger.info('Pin %i is %s' %(r_id, cond))
-    logger.removeHandler(stderr_log_handler)
-    
-# just calls the `main` function above
+
+    r_id = int(r_id)  # Convert r_id to integer
+
+    try:
+        status = relay_read_status(relay_id_template, r_id, board_ip, board_port, logger)
+        if status[0][1] == 1:
+            current_state = 'ON'
+        else:
+            current_state = 'OFF'
+        logger.info('Current state: %s' % current_state)
+
+    except Exception as e:
+        logger.error("Failed to connect to Denkovi module. Check the network connection and ensure the Denkovi module is accessible.")
+        sys.exit(-1)
+
+    if show_state:
+        print('Current state:', current_state)
+
+    if control_state is not None:
+        if control_state == 1:
+            logger.info("Switching relay ON")
+            relay_control(relay_id_template, r_id, 1, board_ip, board_port, logger)
+        elif control_state == 0:
+            logger.info("Switching relay OFF")
+            relay_control(relay_id_template, r_id, 0, board_ip, board_port, logger)
+        else:
+            logger.error("Invalid control state provided. Reverting to OFF.")
+            relay_control(relay_id_template, r_id, 0, board_ip, board_port, logger)
+
+# just call the `main` function above
 if __name__ == '__main__':
     main()
-    
 
 
     
