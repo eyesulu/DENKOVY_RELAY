@@ -3,9 +3,9 @@
 This project allows you to control a Denkovi relay module via a command-line interface and provides a web interface to monitor and control the relay using a web browser.
 
 ## Prerequisites
-- Python 3.6 or above
-- Flask library (version 2.0.1)
-- PySNMP library (version 4.4.10)
+- Python 3.X
+- Flask library (version 1.1.2)
+- PySNMP library (version 4.4.12)
 - pyasn1 library (version 0.4.8)
 
 Please make sure you have the required Python packages installed. Note that the script requires pyasn1 version 0.4.8 for successful operation.
