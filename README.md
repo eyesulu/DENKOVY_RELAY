@@ -37,6 +37,11 @@ Control the relay and switch it OFF:
 python denkovy_code.py --control 0
 ```
 
+A wrong control command will result in relay being turned OFF:
+```shell
+python denkovy_code.py --control X
+```
+
 ## Web Interface
 To use the web interface, run the app.py script.
 
