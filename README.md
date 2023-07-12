@@ -15,7 +15,7 @@ Please make sure you have the required Python packages installed. Note that the 
 pip install Flask PySNMP pyasn1==0.4.8
 ```
 
-##Usage
+## Usage
 1. Update the denkovi.ini files with the necessary configuration settings for your Denkovi module, such as the IP address, port, OID template etc.
 
 2. Run the app.py script to start the Flask web server:
@@ -27,7 +27,7 @@ python app.py
 
 4. Use the "Turn ON" and "Turn OFF" buttons to control the relay. The current state of the relay will be displayed on the page.
 
-##Additional Information
+## Additional Information
 The current version of the project is 1.0.0.
 
 The script was written by Ghalam.
