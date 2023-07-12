@@ -13,6 +13,7 @@ Please make sure you have the required Python packages installed. Note that the 
 
 ```shell
 pip install Flask PySNMP pyasn1==0.4.8
+```
 
 Usage
 Update the app.py and snmp_module.py files with the necessary configuration settings for your Denkovi module, such as the IP address, port, and OID template.
