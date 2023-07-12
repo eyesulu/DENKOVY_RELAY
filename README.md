@@ -48,7 +48,7 @@ To use the web interface, run the app.py script.
 ```shell
 python app.py
 ```
-4. Access the web interface by opening your web browser and navigating to http://localhost:5000.
+4. Access the web interface by opening your web browser and navigating to http://127.0.0.1:5000/.
 
 The web interface provides buttons to turn the relay ON and OFF. The current state of the relay is displayed on the page.
 
