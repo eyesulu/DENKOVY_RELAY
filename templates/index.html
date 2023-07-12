@@ -41,21 +41,71 @@
             cursor: pointer;
             width: 150px;
         }
+
+        /* Style for the error message */
+        .error-message {
+            font-size: 24px;
+            color: red;
+        }
+
+        /* Style for the bullet points */
+        .bullet-point {
+            font-size: 18px;
+            text-align: left;
+            margin-left: 30px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Relay Control</h1>
-        <p>Current State: <span id="relay-state">Loading...</span></p>
-        <button class="btn-on" onclick="turnOn()">Turn ON</button>
-        <button class="btn-off" onclick="turnOff()">Turn OFF</button>
+        {% if error_message %}
+            <p class="error-message">ERROR: {{ error_message }}</p>
+            <ul>
+                <li class="bullet-point">Please check your network connection</li>
+                <li class="bullet-point">Make sure the Denkovi module is accessible</li>
+                <li class="bullet-point">Check the IP address and Port:<br>IP address in use: {{ board_ip }}<br>Port: {{ board_port }}</li>
+            </ul>
+        {% else %}
+            <h1>Relay Control</h1>
+            <p>Current State: <span id="relay-state">Loading...</span></p>
+            <button class="btn-on" onclick="turnOn()">Turn ON</button>
+            <button class="btn-off" onclick="turnOff()">Turn OFF</button>
+        {% endif %}
     </div>
 
+
     <script>
-// Function to update the current state on the website
+        // Function to update the current state on the website
         function updateState(newState) {
             document.getElementById("relay-state").textContent = newState;
         }
+
+        function displayErrorMessage() {
+            var errorMessageElement = document.getElementById("error-message");
+            var errorMessage = "Failed to retrieve the initial state.";
+            errorMessageElement.textContent = errorMessage;
+            errorMessageElement.style.display = "block";
+        }
+
+        // Function to send the AJAX request to get the initial state
+        function getInitialState() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/get_state", true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        updateState(response.state);
+                    } else {
+                        displayErrorMessage();
+                    }
+                }
+            };
+            xhr.send();
+        }
+
+        // Call the function to get the initial state on page load
+        window.addEventListener("load", getInitialState);
 
         // Function to send the AJAX request to turn ON the relay
         function turnOn() {
@@ -88,21 +138,6 @@
             };
             xhr.send(JSON.stringify({ state: "off" }));
         }
-
-        // Function to get the initial state from the server on page load
-        window.addEventListener("load", function () {
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", "/get_state", true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-                    if (xhr.status === 200) {
-                        var response = JSON.parse(xhr.responseText);
-                        updateState(response.state);
-                    }
-                }
-            };
-            xhr.send();
-        });
     </script>
 </body>
 </html>
