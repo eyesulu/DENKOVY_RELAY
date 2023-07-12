@@ -1,35 +1,56 @@
-# Relay Control
+# Denkovi Relay Control
+## Introduction
+This project allows you to control a Denkovi relay module via a command-line interface and provides a web interface to monitor and control the relay using a web browser.
 
-This project provides a web-based interface to control a relay using SNMP and the Denkovi module. It allows you to turn the relay on and off through a user-friendly website.
+## Prerequisites
+- Python 3.6 or above
+- Flask library (version 2.0.1)
+- PySNMP library (version 4.4.10)
+- pyasn1 library (version 0.4.8)
 
-## Requirements
+Please make sure you have the required Python packages installed. Note that the script requires pyasn1 version 0.4.8 for successful operation.
 
-- Python 3.x
-- Flask
-- PySNMP
-- pyasn1==0.4.8
+## Command-Line Interface (CLI)
 
-Please make sure you have the required Python packages installed. Note that the script requires `pyasn1` version 0.4.8 for successful operation. You can install the required packages using pip:
+To control the relay via the command-line interface, use the denkovy_code.py script.
 
+Command-Line Arguments
+- --logdir (optional): Path to the directory where log files will be stored. Default is ./logs/.
+- --inifile (optional): Path to the configuration file. Default is ./denkovy.ini.
+- --state (optional): Show the current state of the relay.
+- --control (optional): Control the relay (0 for OFF, 1 for ON).
+
+Examples:
+
+Show the current state of the relay:
 ```shell
-pip install Flask PySNMP pyasn1==0.4.8
+python denkovy_code.py --state
 ```
 
-## Usage
-1. Update the denkovi.ini files with the necessary configuration settings for your Denkovi module, such as the IP address, port, OID template etc.
+Control the relay and switch it ON:
+```shell
+python denkovy_code.py --control 1
+```
 
-2. Run the app.py script to start the Flask web server:
+Control the relay and switch it OFF:
+```shell
+python denkovy_code.py --control 0
+```
+
+## Web Interface
+To use the web interface, run the app.py script.
+
+1. Make sure the Denkovi relay module is connected.
+
+2. Update the denkovy.ini file with the appropriate configuration settings.
+
+3. Run the following command to start the web server:
 ```shell
 python app.py
 ```
+4. Access the web interface by opening your web browser and navigating to http://localhost:5000.
 
-3. Access the web interface by navigating to http://localhost:5000 in your web browser.
+The web interface provides buttons to turn the relay ON and OFF. The current state of the relay is displayed on the page.
 
-4. Use the "Turn ON" and "Turn OFF" buttons to control the relay. The current state of the relay will be displayed on the page.
-
-## Additional Information
-The current version of the project is 1.0.0.
-
-The script was written by Ghalam.
-
-
+## Version
+Current version: 1.0.0
