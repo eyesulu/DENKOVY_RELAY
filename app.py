@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+##!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jul  4 10:33:48 2023
@@ -57,7 +57,7 @@ if os.path.isfile(inifile):
         oid = config.get("ADDRESS", "oid")
         power_off = config.get("ADDRESS", "power_off")
         power_on = config.get("ADDRESS", "power_on")
-        
+
     except Exception as e:
         logger.error("ERROR: Error reading ini file: %s", e)
         sys.exit(-1)
@@ -65,7 +65,12 @@ else:
     logger.error("no inifile %s exists" % inifile)
     exit(1)
 
-app = Flask(__name__)
+base_dir = '.'
+if hasattr(sys, '_MEIPASS'):
+    base_dir = os.path.join(sys._MEIPASS)
+logger.debug(base_dir)
+
+app = Flask(__name__, template_folder=os.path.join(base_dir, 'templates'))
 
 @app.route('/')
 def index():
