@@ -18,28 +18,23 @@ Command-Line Arguments
 - --logdir (optional): Path to the directory where log files will be stored. Default is ./logs/.
 - --inifile (optional): Path to the configuration file. Default is ./denkovy.ini.
 - --state (optional): Show the current state of the relay.
-- --control (optional): Control the relay (0 for OFF, 1 for ON).
+- --read (optional): Control the relay (0 for OFF, 1 for ON).
 
 Examples:
 
 Show the current state of the relay:
 ```shell
-python denkovy_code.py --state
+python denkovy_code.py --read
 ```
 
 Control the relay and switch it ON:
 ```shell
-python denkovy_code.py --control 1
+python denkovy_code.py --state on
 ```
 
 Control the relay and switch it OFF:
 ```shell
-python denkovy_code.py --control 0
-```
-
-A wrong control command will result in relay being turned OFF:
-```shell
-python denkovy_code.py --control X
+python denkovy_code.py --state off
 ```
 
 ## Web Interface
