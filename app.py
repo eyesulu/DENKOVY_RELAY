@@ -13,7 +13,6 @@ Created on Tue Jul  4 09:18:54 2023
 
 @author: aisulu
 """
-
 import sys
 import os
 from flask import Flask, render_template, request, jsonify
@@ -55,8 +54,9 @@ if os.path.isfile(inifile):
         config.read(inifile)
         board_ip = config.get("ADDRESS", "ip")
         board_port = config.get("ADDRESS", "port")
-        relay_id_template = config.get("ADDRESS", "relay_oid_template")
-        r_id = config.get("ADDRESS", "r_id_1")
+        oid = config.get("ADDRESS", "oid")
+        power_off = config.get("ADDRESS", "power_off")
+        power_on = config.get("ADDRESS", "power_on")
         
     except Exception as e:
         logger.error("ERROR: Error reading ini file: %s", e)
@@ -70,50 +70,56 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     try:
-        # Check connection to Denkovi module
-        relay_read_status(relay_id_template, r_id, board_ip, board_port, logger)
-        return render_template('index.html', board_ip=board_ip, board_port=board_port)
+        status = relay_read_status(oid, board_ip, board_port, logger)
+        current_state = 'ON' if status == power_on else 'OFF'
+        return render_template('index.html', current_state=current_state, error_message=None)
     except Exception as e:
-        # Pass the error message to the template
-        error_message = f"Failed to retrieve the initial state."
-        return render_template('index.html', error_message=error_message, board_ip=board_ip, board_port=board_port)
+        error_message = "Failed to retrieve the initial state."
+        logger.error(error_message)
+        return render_template('index.html',board_ip=board_ip, board_port=board_port, current_state=None, error_message=error_message)
 
 @app.route('/toggle', methods=['POST'])
 def snmp_toggle():
     try:
         data = request.get_json()
         state = data['state']
+        port = data.get('port', 1)  # Default to port 1 if 'port' key is not provided
 
         if state == 'on':
-            relay_control(relay_id_template, r_id, 1, board_ip, board_port, logger)
-            logger.error("The relay was turned ON")
+            relay_control(oid, power_on, board_ip, board_port, logger)
         elif state == 'off':
-            relay_control(relay_id_template, r_id, 0, board_ip, board_port, logger)
-            logger.error("The relay was turned OFF")
+            relay_control(oid, power_off, board_ip, board_port, logger)
 
-        # Retrieve the updated status after the state change
-        status = relay_read_status(relay_id_template, r_id, board_ip, board_port, logger)
-        new_state = 'ON' if status[0][1] == 1 else 'OFF'
+        # Read the status of the updated port
+        status = relay_read_status(oid, board_ip, board_port, logger)
+        current_state = 'ON' if status[0] == power_on else 'OFF'
 
-        # Log the current state
-        logger.error("Current relay state: %s", new_state)
+        return jsonify({'currentState': current_state})
 
-        return jsonify({'state': new_state})
     except Exception as e:
         # Handle the exception and return an error message
         error_message = str(e)
         return jsonify({"error": error_message}), 500
-    
+
 @app.route("/get_state", methods=["GET"])
 def get_state():
-    # Get the current state of the relay
-    status = relay_read_status(relay_id_template, r_id, board_ip, board_port, logger)
-    state = 'ON' if status[0][1] == 1 else 'OFF'
-    return jsonify({"state": state})
+    try:
+        status = relay_read_status(oid, board_ip, board_port, logger)
+        byte_value = int(status[0][1])
+        if byte_value == int(power_on, 16):
+            current_state = "ON"
+        elif byte_value == int(power_off, 16):
+            current_state = "OFF"
+        else:
+            current_state = f"ERROR: unknown state ({byte_value})"
+        return jsonify({"byteValue": byte_value, "currentState": current_state})
+    except Exception as e:
+        error_message = "Failed to retrieve the state."
+        logger.error(error_message)
+        return jsonify({"error": error_message}), 500
 
 if __name__ == '__main__':
     app.run()
-  
 
 
 
