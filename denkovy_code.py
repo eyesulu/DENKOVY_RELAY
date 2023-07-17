@@ -59,26 +59,21 @@ def snmpset(logger, community, ip, port, oid, type, value):
             return oid, val
 
 
-def relay_control(relay_id_template, r_id, value, board_ip, board_port, logger):
-    relay_id = relay_id_template.replace("X", str(r_id))
-    relay_id_tuple = tuple(map(int,relay_id.split(".")[1:][:-1]))
-    snmpset(logger=logger, oid=relay_id_tuple, type="i", value=value, community="private", ip=board_ip, port=board_port)
+def relay_control(oid, hex_value, board_ip, board_port, logger):
+    try:
+        value = int(hex_value, 16)
+        if value < 0 or value > 255:
+            logger.error("Invalid hex value. Must be between 00 and FF.")
+            return
+    except ValueError:
+        logger.error("Invalid hex value. Must be a valid hexadecimal.")
+        return
+
+    snmpset(logger=logger, oid=oid, type="i", value=value, community="private", ip=board_ip, port=board_port)
 
 
-def relay_reset(relay_id_template, board_ip, board_port, logger):
-    value = 0
-    for i in range(1, 9):
-        relay_id = relay_id_template.replace("X", str(i))
-        relay_id_tuple = tuple(map(int,relay_id.split(".")[1:][:-1]))
-        snmpset(logger=logger, oid=relay_id_tuple, type="i", value=value, community="private", ip=board_ip, port=board_port)
-
-
-def relay_read_status(relay_id_template, r_id, board_ip, board_port, logger):
-    relay_id = relay_id_template.replace("X", str(r_id))
-    relay_id_tuple = tuple(map(int,relay_id.split(".")[1:][:-1]))
-    logger.debug(relay_id_tuple)
-    logger.debug(board_ip)
-    status = snmpget(logger, "private", board_ip, board_port, relay_id_tuple)
+def relay_read_status(oid, board_ip, board_port, logger):
+    status = snmpget(logger, "private", board_ip, board_port, oid)
     return status
 
 
@@ -88,14 +83,14 @@ def main():
                         default="./logs/")  # change path to './logs/'
     parser.add_argument("--inifile", type=str, help='Path to config file.',
                         default="./denkovi.ini")  # change path to './denkovy.ini'
-    parser.add_argument("--state", action='store_true', help='Show current state of the relay.')
-    parser.add_argument("--control", type=int, help='Control the relay (0 for OFF, 1 for ON).')
+    parser.add_argument("--state", choices=["on", "off"], help='State to set the relay.')
+    parser.add_argument("--read", action="store_true", help='Read the current state of the relay.')
 
     args = parser.parse_args()
     logdir = args.logdir
     inifile = args.inifile
-    show_state = args.state
-    control_state = args.control
+    state = args.state
+    read_state = args.read
 
     # ---------LOGGING-----------------------------------------------------------------------------
     logger = logging.getLogger('')
@@ -118,8 +113,9 @@ def main():
             config.read(inifile)
             board_ip = config.get("ADDRESS", "ip")
             board_port = config.get("ADDRESS", "port")
-            relay_id_template = config.get("ADDRESS", "relay_oid_template")
-            r_id = config.get("ADDRESS", "r_id_1")  # Define r_id
+            oid = config.get("ADDRESS", "oid")
+            power_off = config.get("ADDRESS", "power_off")
+            power_on = config.get("ADDRESS", "power_on")
 
         except Exception as e:
             logger.error("ERROR: Error reading ini file: %s", e)
@@ -128,33 +124,25 @@ def main():
         logger.error("no inifile %s exists" % inifile)
         exit(1)
 
-    r_id = int(r_id)  # Convert r_id to integer
-
-    try:
-        status = relay_read_status(relay_id_template, r_id, board_ip, board_port, logger)
-        if status[0][1] == 1:
-            current_state = 'ON'
+    if read_state:
+        status = relay_read_status(oid, board_ip, board_port, logger)
+        logger.info("Current state: {}".format(status))
+        byte_value = int(status[0][1])
+        if byte_value == int(power_on, 16):
+            print("The power is ON")
+        elif byte_value == int(power_off, 16):
+            print("The power is OFF")
         else:
-            current_state = 'OFF'
-        logger.info('Current state: %s' % current_state)
-
-    except Exception as e:
-        logger.error("Failed to connect to Denkovi module. Check the network connection and ensure the Denkovi module is accessible.")
-        sys.exit(-1)
-
-    if show_state:
-        print('Current state:', current_state)
-
-    if control_state is not None:
-        if control_state == 1:
-            logger.info("Switching relay ON")
-            relay_control(relay_id_template, r_id, 1, board_ip, board_port, logger)
-        elif control_state == 0:
-            logger.info("Switching relay OFF")
-            relay_control(relay_id_template, r_id, 0, board_ip, board_port, logger)
-        else:
-            logger.error("Invalid control state provided. Reverting to OFF.")
-            relay_control(relay_id_template, r_id, 0, board_ip, board_port, logger)
+            print (status[0][1])
+    elif state:
+        if state == "on":
+            relay_control(oid, power_on, board_ip, board_port, logger)
+            logger.info("Relay turned ON")
+        elif state == "off":
+            relay_control(oid, power_off, board_ip, board_port, logger)
+            logger.info("Relay turned OFF")
+    else:
+        logger.error("No action specified. Please provide either --state or --read.")
 
 # just call the `main` function above
 if __name__ == '__main__':
