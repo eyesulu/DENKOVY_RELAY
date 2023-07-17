@@ -72,30 +72,22 @@
             <button class="btn-off" onclick="turnOff()">Turn OFF</button>
         {% endif %}
     </div>
-
-
     <script>
         // Function to update the current state on the website
         function updateState(newState) {
-            document.getElementById("relay-state").textContent = newState;
+            var currentStateElement = document.getElementById("relay-state");
+            currentStateElement.textContent = newState;
         }
-
-        function displayErrorMessage() {
-            var errorMessageElement = document.getElementById("error-message");
-            var errorMessage = "Failed to retrieve the initial state.";
-            errorMessageElement.textContent = errorMessage;
-            errorMessageElement.style.display = "block";
-        }
-
-        // Function to send the AJAX request to get the initial state
-        function getInitialState() {
+    
+        // Function to update the current state from the server
+        function getCurrentState() {
             var xhr = new XMLHttpRequest();
             xhr.open("GET", "/get_state", true);
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === XMLHttpRequest.DONE) {
                     if (xhr.status === 200) {
                         var response = JSON.parse(xhr.responseText);
-                        updateState(response.state);
+                        updateState(response.currentState);
                     } else {
                         displayErrorMessage();
                     }
@@ -103,12 +95,12 @@
             };
             xhr.send();
         }
-
+    
         // Call the function to get the initial state on page load
-        window.addEventListener("load", getInitialState);
-
-        // Function to send the AJAX request to turn ON the relay
-        function turnOn() {
+        window.addEventListener("load", getCurrentState);
+    
+        // Function to send the AJAX request to turn ON or OFF the relay
+        function toggleState(state) {
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "/toggle", true);
             xhr.setRequestHeader("Content-Type", "application/json");
@@ -116,28 +108,27 @@
                 if (xhr.readyState === XMLHttpRequest.DONE) {
                     if (xhr.status === 200) {
                         var response = JSON.parse(xhr.responseText);
-                        updateState(response.state);
+                        updateState(response.currentState);
+                        // Update the current state after each successful POST request
+                        getCurrentState();
+                    } else {
+                        displayErrorMessage();
                     }
                 }
             };
-            xhr.send(JSON.stringify({ state: "on" }));
+            xhr.send(JSON.stringify({ state: state }));
         }
-
-        // Function to send the AJAX request to turn OFF the relay
+    
+        // Function to handle the Turn ON button click
+        function turnOn() {
+            toggleState("on");
+        }
+    
+        // Function to handle the Turn OFF button click
         function turnOff() {
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/toggle", true);
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-                    if (xhr.status === 200) {
-                        var response = JSON.parse(xhr.responseText);
-                        updateState(response.state);
-                    }
-                }
-            };
-            xhr.send(JSON.stringify({ state: "off" }));
+            toggleState("off");
         }
     </script>
+    
 </body>
 </html>
