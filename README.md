@@ -17,8 +17,8 @@ To control the relay via the command-line interface, use the denkovy_code.py scr
 Command-Line Arguments
 - --logdir (optional): Path to the directory where log files will be stored. Default is ./logs/.
 - --inifile (optional): Path to the configuration file. Default is ./denkovy.ini.
-- --state (optional): Show the current state of the relay.
-- --read (optional): Control the relay (0 for OFF, 1 for ON).
+- --state (optional): Set the relay to be ON/OFF.
+- --read (optional): Show the current state of the relay.
 
 Examples:
 
